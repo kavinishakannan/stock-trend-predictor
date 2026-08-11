@@ -38,7 +38,7 @@ const CLASSES: Label[] = ["UP", "DOWN", "NEUTRAL"];
 
 function classCounts(rows: number[], y: number[]): number[] {
   const counts = [0, 0, 0];
-  for (const i of rows) counts[y[i]!]! + 0, (counts[y[i]!] = counts[y[i]!]! + 1);
+  for (const i of rows) counts[y[i]!] = counts[y[i]!]! + 1;
   return counts;
 }
 
