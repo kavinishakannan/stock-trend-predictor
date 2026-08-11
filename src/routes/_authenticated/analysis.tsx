@@ -46,7 +46,7 @@ function AnalysisPage() {
       {rows.length > 0 && (
         <>
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Trading days" value={String(rows.length)} hint={data?.companyName} />
+            <StatCard label="Trading days" value={String(rows.length)} hint={data?.companyName ?? ticker} />
             <StatCard
               label="Period change"
               value={`${changePct.toFixed(2)}%`}
