@@ -28,7 +28,7 @@ function DashboardPage() {
   const history = useHistory(ticker);
   const recent = usePredictionHistory();
   const p = prediction.data;
-  const rows = (history.data ?? []).slice(-90);
+  const rows = (history.data?.rows ?? []).slice(-90);
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-5 pb-16 pt-4 lg:px-8 lg:pt-8">
