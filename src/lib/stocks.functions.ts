@@ -83,18 +83,6 @@ export const generateAiCommentary = createServerFn({ method: "POST" })
     return generateGenAiInsight(prediction);
   });
 
-const _unusedListPredictions = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("predictions")
-      .select("id, ticker, prediction, confidence, risk_level, model_accuracy, prediction_date")
-      .order("prediction_date", { ascending: false })
-      .limit(50);
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  });
-
 export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
