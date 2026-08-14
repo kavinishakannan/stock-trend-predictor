@@ -72,6 +72,17 @@ export const listPredictions = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+/** GenAI module: sends the ML output to Lovable AI and returns the generated commentary. */
+export const generateAiCommentary = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ ticker: tickerSchema }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { runPredictionForTicker } = await import("./stocks.server");
+    const { generateGenAiInsight } = await import("./genai.server");
+    const prediction = await runPredictionForTicker(context.supabase, context.userId, data.ticker);
+    return generateGenAiInsight(prediction);
+  });
+
 export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
