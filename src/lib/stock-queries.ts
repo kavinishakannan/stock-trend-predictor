@@ -1,6 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getHistory, listPredictions, listStocks, predictTrend } from "./stocks.functions";
+import {
+  generateAiCommentary,
+  getHistory,
+  listPredictions,
+  listStocks,
+  predictTrend,
+} from "./stocks.functions";
+
+/** GenAI module: asks Lovable AI to write commentary on the ML output. */
+export function useAiCommentary() {
+  const generate = useServerFn(generateAiCommentary);
+  return useMutation({
+    mutationFn: (ticker: string) => generate({ data: { ticker } }),
+  });
+}
 
 export function useStocks() {
   const fetchStocks = useServerFn(listStocks);
