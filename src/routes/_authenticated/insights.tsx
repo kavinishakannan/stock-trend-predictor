@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { Loader2, TrendingUp } from "lucide-react";
-import { usePrediction } from "@/lib/stock-queries";
+import { Loader2, Sparkles, TrendingUp } from "lucide-react";
+import { useAiCommentary, usePrediction } from "@/lib/stock-queries";
+import { Button } from "@/components/ui/button";
 import { Disclaimer, StatCard, StockSearch } from "@/components/stock/StockSearch";
 import { RiskBadge, TrendBadge } from "@/components/stock/TrendBadge";
 import { money } from "@/lib/format";
@@ -23,6 +24,7 @@ function InsightsPage() {
   const { ticker = "AAPL" } = Route.useSearch();
   const navigate = Route.useNavigate();
   const { data: p, isLoading, isError, error, isFetching } = usePrediction(ticker);
+  const ai = useAiCommentary();
 
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-5 pb-16 pt-4 lg:px-8 lg:pt-8">
@@ -66,6 +68,51 @@ function InsightsPage() {
           <section className="panel p-6">
             <h3 className="text-lg font-semibold">Suggested outlook</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.outlook}</p>
+          </section>
+
+          <section className="panel p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
+                  <Sparkles className="size-5 text-primary" />
+                  GenAI commentary
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Generative AI module: the Random Forest output is sent to a large language model, which writes
+                  this commentary live.
+                </p>
+              </div>
+              <Button onClick={() => ai.mutate(p.ticker)} disabled={ai.isPending}>
+                {ai.isPending ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" /> Generating…
+                  </>
+                ) : (
+                  <>Generate for {p.ticker}</>
+                )}
+              </Button>
+            </div>
+
+            {ai.isError && (
+              <p className="mt-4 text-sm text-down">{(ai.error as Error).message}</p>
+            )}
+
+            {ai.data && (
+              <>
+                <div className="mt-4 space-y-3 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                  {ai.data.text}
+                </div>
+                <p className="num mt-4 text-xs text-muted-foreground">
+                  Model: {ai.data.model} · generated {new Date(ai.data.generatedAt).toLocaleString()}
+                </p>
+              </>
+            )}
+
+            {!ai.data && !ai.isPending && !ai.isError && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Press generate to see the actual model-written response.
+              </p>
+            )}
           </section>
 
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
