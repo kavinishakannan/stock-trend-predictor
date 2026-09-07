@@ -14,36 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_insights: {
+        Row: {
+          ai_model: string
+          ai_response: string
+          confidence: number
+          created_at: string
+          id: string
+          model_accuracy: number | null
+          prediction_id: string | null
+          risk_level: string
+          ticker: string
+          trend: string
+          user_id: string | null
+          volatility: number | null
+        }
+        Insert: {
+          ai_model?: string
+          ai_response: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          model_accuracy?: number | null
+          prediction_id?: string | null
+          risk_level?: string
+          ticker: string
+          trend: string
+          user_id?: string | null
+          volatility?: number | null
+        }
+        Update: {
+          ai_model?: string
+          ai_response?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          model_accuracy?: number | null
+          prediction_id?: string | null
+          risk_level?: string
+          ticker?: string
+          trend?: string
+          user_id?: string | null
+          volatility?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_prediction_id_fkey"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "predictions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       predictions: {
         Row: {
           confidence: number
+          f1_macro: number | null
           id: string
+          latest_close: number | null
+          market_context: string | null
           model_accuracy: number
+          precision_macro: number | null
           prediction: string
           prediction_date: string
+          recall_macro: number | null
           risk_level: string
+          sma10: number | null
+          sma5: number | null
+          testing_samples: number | null
           ticker: string
+          training_samples: number | null
           user_id: string | null
+          volatility: number | null
         }
         Insert: {
           confidence: number
+          f1_macro?: number | null
           id?: string
+          latest_close?: number | null
+          market_context?: string | null
           model_accuracy?: number
+          precision_macro?: number | null
           prediction: string
           prediction_date?: string
+          recall_macro?: number | null
           risk_level: string
+          sma10?: number | null
+          sma5?: number | null
+          testing_samples?: number | null
           ticker: string
+          training_samples?: number | null
           user_id?: string | null
+          volatility?: number | null
         }
         Update: {
           confidence?: number
+          f1_macro?: number | null
           id?: string
+          latest_close?: number | null
+          market_context?: string | null
           model_accuracy?: number
+          precision_macro?: number | null
           prediction?: string
           prediction_date?: string
+          recall_macro?: number | null
           risk_level?: string
+          sma10?: number | null
+          sma5?: number | null
+          testing_samples?: number | null
           ticker?: string
+          training_samples?: number | null
           user_id?: string | null
+          volatility?: number | null
         }
         Relationships: []
       }
