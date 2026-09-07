@@ -67,6 +67,9 @@ function buildTree(
   minSamples: number,
   featuresPerSplit: number,
   rand: () => number,
+  /** Accumulator for Gini-based feature importance (weighted impurity decrease). */
+  importance: number[],
+  rootSize: number,
 ): Node {
   const counts = classCounts(rows, y);
   const parentGini = gini(counts);
@@ -108,6 +111,9 @@ function buildTree(
 
   if (!best || best.gain <= 1e-7) return leafFrom(counts);
 
+  // Weighted impurity decrease, exactly like scikit-learn's feature_importances_.
+  importance[best.feature] = importance[best.feature]! + (rows.length / rootSize) * best.gain;
+
   const leftRows: number[] = [];
   const rightRows: number[] = [];
   for (const i of rows) {
@@ -119,8 +125,8 @@ function buildTree(
     leaf: false,
     feature: best.feature,
     threshold: best.threshold,
-    left: buildTree(X, y, leftRows, depth + 1, maxDepth, minSamples, featuresPerSplit, rand),
-    right: buildTree(X, y, rightRows, depth + 1, maxDepth, minSamples, featuresPerSplit, rand),
+    left: buildTree(X, y, leftRows, depth + 1, maxDepth, minSamples, featuresPerSplit, rand, importance, rootSize),
+    right: buildTree(X, y, rightRows, depth + 1, maxDepth, minSamples, featuresPerSplit, rand, importance, rootSize),
   };
 }
 
@@ -134,6 +140,8 @@ function predictTree(node: Node, row: number[]): number[] {
 
 export interface Forest {
   trees: Node[];
+  /** Normalised Gini importance per feature (sums to 1 when the forest split at all). */
+  featureImportances: number[];
 }
 
 export function trainForest(
@@ -143,21 +151,31 @@ export function trainForest(
 ): Forest {
   const { trees = 60, maxDepth = 8, minSamples = 4, seed = 7 } = options;
   const rand = makeRandom(seed);
-  const featuresPerSplit = Math.max(2, Math.round(Math.sqrt(X[0]!.length)));
+  const featureCount = X[0]!.length;
+  const featuresPerSplit = Math.max(2, Math.round(Math.sqrt(featureCount)));
   const forest: Node[] = [];
+  const importance = new Array<number>(featureCount).fill(0);
 
   for (let t = 0; t < trees; t++) {
     // Bootstrap sample (bagging)
     const rows: number[] = [];
     for (let i = 0; i < X.length; i++) rows.push(Math.floor(rand() * X.length));
-    forest.push(buildTree(X, y, rows, 0, maxDepth, minSamples, featuresPerSplit, rand));
+    forest.push(
+      buildTree(X, y, rows, 0, maxDepth, minSamples, featuresPerSplit, rand, importance, rows.length || 1),
+    );
   }
 
-  return { trees: forest };
+  const total = importance.reduce((a, b) => a + b, 0);
+  const featureImportances = total > 0 ? importance.map((v) => v / total) : importance.map(() => 0);
+
+  return { trees: forest, featureImportances };
 }
 
-/** Majority vote across trees, returning the winning class and its vote share. */
-export function forestPredict(forest: Forest, row: number[]): { label: Label; probs: number[] } {
+/** Majority vote across trees, returning the winning class, vote share and raw tree counts. */
+export function forestPredict(
+  forest: Forest,
+  row: number[],
+): { label: Label; probs: number[]; counts: number[]; treeCount: number } {
   const totals = [0, 0, 0];
   for (const tree of forest.trees) {
     const probs = predictTree(tree, row);
@@ -168,7 +186,12 @@ export function forestPredict(forest: Forest, row: number[]): { label: Label; pr
   let bestIdx = 0;
   for (let c = 1; c < 3; c++) if (totals[c]! > totals[bestIdx]!) bestIdx = c;
   const total = forest.trees.length || 1;
-  return { label: CLASSES[bestIdx]!, probs: totals.map((v) => v / total) };
+  return {
+    label: CLASSES[bestIdx]!,
+    probs: totals.map((v) => v / total),
+    counts: totals,
+    treeCount: forest.trees.length,
+  };
 }
 
 export function labelToIndex(label: Label): number {
@@ -178,3 +201,5 @@ export function labelToIndex(label: Label): number {
 export function indexToLabel(index: number): Label {
   return CLASSES[index]!;
 }
+
+export const CLASS_ORDER = CLASSES;
